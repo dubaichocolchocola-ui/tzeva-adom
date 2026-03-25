@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>צבע אדום</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -27,6 +27,9 @@ header{
 }
 .brand{display:flex;align-items:center;gap:10px}
 .sicon{font-size:20px}
+.logo-wrap{display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-wrap.active svg circle:nth-child(1){animation:logo-ring 0.5s infinite alternate}
+@keyframes logo-ring{from{stroke-opacity:0.4;r:17}to{stroke-opacity:0.9;r:16}}
 .sicon.active{animation:shake 0.4s infinite}
 @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
 .bname{font-size:16px;font-weight:900}
@@ -45,6 +48,8 @@ header{
 .clk{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mu);min-width:65px;text-align:center}
 .btn{background:var(--s2);border:1px solid var(--b2);color:var(--mu);height:32px;padding:0 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;transition:all 0.15s}
 .btn:hover{background:var(--s3);color:var(--tx)}
+.btn svg{transition:transform 0.4s}
+#refbtn:hover svg{transform:rotate(180deg)}
 .btn.on{background:var(--redg);border-color:rgba(255,34,34,0.3);color:var(--red2)}
 
 /* SIDEBAR */
@@ -67,15 +72,19 @@ header{
 #lw{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--s3) transparent}
 #lw::-webkit-scrollbar{width:3px}
 #lw::-webkit-scrollbar-thumb{background:var(--s3)}
-.ai{padding:11px 15px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background 0.1s;border-right:2px solid transparent}
-.ai:hover{background:var(--s2);border-right-color:var(--red)}
+.ai{display:flex;border-bottom:1px solid var(--b1);cursor:pointer;transition:background 0.1s;min-height:72px}
+.ai:hover{background:var(--s2)}
 .ai.nw{animation:newi 2s ease-out}
-@keyframes newi{from{background:rgba(255,34,34,0.15)}to{background:transparent}}
-.ait{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.aitm{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mu)}
-.aicnt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--red2);background:var(--redg);border:1px solid rgba(255,34,34,0.18);border-radius:4px;padding:1px 5px}
-.aiar{font-size:12px;color:var(--mu);line-height:1.5}
-.aish{margin-top:4px;font-size:10px;color:var(--mu)}
+@keyframes newi{from{background:rgba(255,34,34,0.1)}to{background:transparent}}
+.ai-bar{width:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ai-bar.red{background:#cc1111}
+.ai-bar.plane{background:#aa0000}
+.ai-bar.green{background:#1a7a2e}
+.ai-bar.gray{background:#333}
+.ai-content{flex:1;padding:12px 14px 12px 8px;min-width:0}
+.ai-title{font-size:14px;font-weight:700;color:var(--tx);margin-bottom:3px;line-height:1.3;direction:rtl}
+.ai-time{font-size:12px;color:#e05555;margin-bottom:5px;direction:rtl}
+.ai-areas{font-size:12px;color:#8090b0;line-height:1.55;direction:rtl}
 .shp{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:0.5px;margin-left:4px}
 .s15{background:rgba(255,0,0,0.18);color:#ff7070}
 .s30{background:rgba(255,100,0,0.18);color:#ffaa55}
@@ -88,7 +97,7 @@ header{
 #map{width:100%;height:100%}
 
 /* Leaflet overrides */
-.leaflet-container{background:#0d1520}
+.leaflet-container{background:#0d1520 !important}
 .leaflet-control-zoom{border:1px solid rgba(255,255,255,0.12)!important;border-radius:8px!important;overflow:hidden}
 .leaflet-control-zoom a{background:#0d1117!important;color:#7080a0!important;border-color:rgba(255,255,255,0.08)!important}
 .leaflet-control-zoom a:hover{background:#1c2535!important;color:#e2e8f5!important}
@@ -124,6 +133,13 @@ header{
 #fl.go{animation:flash 0.6s ease-out 4}
 @keyframes flash{0%,100%{opacity:0}40%{opacity:1;background:rgba(255,20,20,0.2)}}
 
+@keyframes pop-in{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+.sopt{background:#141b24;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:13px;color:#7080a0;display:flex;align-items:center;gap:8px;transition:all 0.15s}
+.sopt:hover{background:#1c2535;color:#e2e8f5}
+.sopt.on{background:rgba(255,34,34,0.12);border-color:rgba(255,34,34,0.35);color:#ff6666}
+.ropt{background:#141b24;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:5px 12px;cursor:pointer;font-size:12px;color:#7080a0;transition:all 0.15s}
+.ropt:hover{background:#1c2535;color:#e2e8f5}
+.ropt.on{background:rgba(255,34,34,0.12);border-color:rgba(255,34,34,0.35);color:#ff6666}
 @media(max-width:720px){
   #app{grid-template-columns:1fr;grid-template-rows:52px 1fr;height:100dvh}
   #sb{display:none;position:fixed;bottom:0;left:0;right:0;z-index:2000;
@@ -142,7 +158,7 @@ header{
     gap:10px;align-items:center;justify-content:space-between;
   }
   #mob-bar.hidden{display:none}
-  .mob-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  .mob-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
     padding:10px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--b2);
     background:var(--s2);color:var(--mu);cursor:pointer}
   .mob-pill.active{background:var(--redg);border-color:rgba(255,34,34,0.3);color:var(--red2)}
@@ -167,7 +183,15 @@ header{
 <div id="app">
   <header>
     <div class="brand">
-      <span class="sicon" id="si">🚨</span>
+      <div class="logo-wrap" id="si">
+  <svg width="38" height="38" viewBox="0 0 52 52">
+    <rect width="52" height="52" rx="26" fill="#1a0505"/>
+    <path d="M20 36 L28 10 L36 36" fill="none" stroke="#ff2222" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M22 30 L34 30" stroke="#ff2222" stroke-width="2" stroke-linecap="round"/>
+    <path d="M14 42 L28 42 L42 42" stroke="#ff4444" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="28" cy="10" r="3" fill="#ffcc00"/>
+  </svg>
+</div>
       <div class="bname">צבע <span>אדום</span></div>
       <div class="pill ok" id="pill"><span class="ldot" id="dot"></span><span id="ptxt">שקט יחסי</span></div>
     </div>
@@ -178,9 +202,35 @@ header{
     </div>
     <div class="hbtns">
       <div class="clk" id="clk">--:--:--</div>
-      <button class="btn" id="sndb" onclick="toggleSnd()">🔕 קול</button>
-      <button class="btn" onclick="tryAPI()">↻</button>
-      <button class="btn" id="themebtn" onclick="toggleTheme()">☀️ בהיר</button>
+      <button class="btn" id="sndb" onclick="toggleSnd()">
+  <svg id="snd-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <line x1="23" y1="9" x2="17" y2="15" class="snd-x"/>
+    <line x1="17" y1="9" x2="23" y2="15" class="snd-x"/>
+  </svg>
+  קול
+</button>
+      <button class="btn" onclick="tryAPI()" id="refbtn">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"/>
+    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+  </svg>
+</button>
+      <button class="btn" onclick="openSettings()" title="הגדרות" style="font-size:16px">⚙</button>
+      <button class="btn" id="themebtn" onclick="toggleTheme()">
+  <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+  בהיר
+</button>
     </div>
   </header>
 
@@ -197,6 +247,17 @@ header{
       <div class="tab on" id="t1" onclick="setTab('h')">היסטוריה</div>
       <div class="tab" id="t2" onclick="setTab('s')">סטטיסטיקה</div>
     </div>
+    <div id="search-bar" style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.06);position:relative">
+      <div style="display:flex;align-items:center;gap:8px;background:#141b24;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:7px 12px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a6680" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="city-search" type="text" placeholder="חפש עיר לעקוב..." autocomplete="off"
+          style="background:none;border:none;outline:none;color:#e2e8f5;font-family:'Heebo',sans-serif;font-size:13px;flex:1;direction:rtl"
+          oninput="onSearch(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
+        <span id="search-clear" onclick="clearSearch()" style="display:none;cursor:pointer;color:#5a6680;font-size:16px;line-height:1">×</span>
+      </div>
+      <div id="search-dropdown" style="display:none;position:absolute;right:12px;left:12px;top:52px;background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:8px;z-index:200;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.6)"></div>
+    </div>
+    <div id="watched-cities" style="display:none;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:6px"></div>
     <div id="lw"><div class="nodata">טוען...</div></div>
   </div>
 
@@ -212,51 +273,204 @@ header{
   </div>
 </div>
 
+<!-- SETTINGS PANEL -->
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:5000;align-items:center;justify-content:center">
+  <div id="settings-panel" style="background:#0d1117;border:1px solid rgba(255,255,255,0.12);border-radius:16px;width:90%;max-width:400px;direction:rtl;overflow:hidden;animation:pop-in 0.2s ease-out">
+    <div style="background:#0a0d14;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:700;color:#e2e8f5">הגדרות</div>
+      <div onclick="closeSettings()" style="cursor:pointer;color:#7080a0;font-size:20px;line-height:1;padding:2px 6px">×</div>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:20px">
+
+      <!-- Sound selector -->
+      <div>
+        <div style="font-size:11px;color:#5a6680;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">סוג צליל אזעקה</div>
+        <div id="sound-options" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="sopt on" data-snd="0" onclick="selectSound(0)">
+            <span>🔔</span> קלאסי
+          </div>
+          <div class="sopt" data-snd="1" onclick="selectSound(1)">
+            <span>📻</span> סירנה
+          </div>
+          <div class="sopt" data-snd="2" onclick="selectSound(2)">
+            <span>🔊</span> פיפ מהיר
+          </div>
+          <div class="sopt" data-snd="3" onclick="selectSound(3)">
+            <span>🔕</span> ללא צליל
+          </div>
+        </div>
+      </div>
+
+      <!-- Region filter -->
+      <div>
+        <div style="font-size:11px;color:#5a6680;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">סנן לפי אזור</div>
+        <div id="region-options" style="display:flex;flex-wrap:wrap;gap:6px">
+          <div class="ropt on" data-reg="all" onclick="selectRegion('all')">כל הארץ</div>
+          <div class="ropt" data-reg="north" onclick="selectRegion('north')">צפון</div>
+          <div class="ropt" data-reg="haifa" onclick="selectRegion('haifa')">חיפה</div>
+          <div class="ropt" data-reg="center" onclick="selectRegion('center')">מרכז</div>
+          <div class="ropt" data-reg="tel-aviv" onclick="selectRegion('tel-aviv')">תל אביב</div>
+          <div class="ropt" data-reg="jerusalem" onclick="selectRegion('jerusalem')">ירושלים</div>
+          <div class="ropt" data-reg="south" onclick="selectRegion('south')">דרום</div>
+          <div class="ropt" data-reg="gaza" onclick="selectRegion('gaza')">עוטף עזה</div>
+          <div class="ropt" data-reg="eilat" onclick="selectRegion('eilat')">אילת</div>
+        </div>
+        <!-- City search inside settings -->
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;background:#0d1117;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:7px 12px;position:relative">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a6680" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="set-city-search" type="text" placeholder="חפש עיר ספציפית..." autocomplete="off"
+            style="background:none;border:none;outline:none;color:#e2e8f5;font-family:'Heebo',sans-serif;font-size:13px;flex:1;direction:rtl"
+            oninput="onSetSearch(this.value)">
+          <span id="set-search-clear" onclick="clearSetSearch()" style="display:none;cursor:pointer;color:#5a6680;font-size:18px;line-height:1">×</span>
+          <div id="set-search-dd" style="display:none;position:absolute;right:0;left:0;top:42px;background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:8px;z-index:300;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.7)"></div>
+        </div>
+        <!-- Watched tags -->
+        <div id="set-watched" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
+
+      <!-- Volume -->
+      <div>
+        <div style="font-size:11px;color:#5a6680;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">עוצמת קול</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:14px">🔈</span>
+          <input type="range" id="vol-slider" min="0" max="100" value="70" oninput="setVol(this.value)" style="flex:1">
+          <span id="vol-val" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#e2e8f5;min-width:36px">70%</span>
+        </div>
+      </div>
+
+      <!-- Test button -->
+      <div onclick="testAlert()" style="background:rgba(255,34,34,0.12);border:1px solid rgba(255,34,34,0.25);border-radius:8px;padding:12px;text-align:center;cursor:pointer;color:#ff6666;font-size:13px;font-weight:600;transition:background 0.15s" onmouseover="this.style.background='rgba(255,34,34,0.2)'" onmouseout="this.style.background='rgba(255,34,34,0.12)'">
+        🔔 בדוק צליל אזעקה
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- Mobile bottom bar -->
 <div id="mob-bar">
-  <div class="mob-pill" id="mob-hist" onclick="mobTab('hist')">📋 היסטוריה</div>
-  <div class="mob-pill" id="mob-map" onclick="mobTab('map')" style="max-width:60px">🗺</div>
-  <div class="mob-pill" id="mob-stats" onclick="mobTab('stats')">📊 סטטיסטיקה</div>
+  <div class="mob-pill" id="mob-hist" onclick="mobTab('hist')">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  היסטוריה
+</div>
+  <div class="mob-pill" id="mob-map" onclick="mobTab('map')" style="max-width:60px">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+</div>
+  <div class="mob-pill" id="mob-stats" onclick="mobTab('stats')">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  סטטיסטיקה
+</div>
 </div>
 
 <!-- Mobile active alert strip -->
 <div class="mob-alert-strip" id="mob-strip">
-  <span style="font-size:18px">🚨</span>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   <span id="mob-strip-txt">אזעקה פעילה!</span>
   <span id="mob-cdn" style="font-family:'IBM Plex Mono',monospace;margin-right:auto">90</span>
   <span style="font-size:11px;opacity:0.8">שנ'</span>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script>
 const CITIES = {
-  'אילת':[29.56,34.95,30],'מצפה רמון':[30.61,34.80,30],
-  'דימונה':[31.07,35.03,30],'ערד':[31.26,35.21,30],
-  'באר שבע':[31.25,34.79,45],'רהט':[31.39,34.75,45],
-  'אופקים':[31.31,34.62,30],'נתיבות':[31.42,34.59,30],
-  'שדרות':[31.52,34.60,30],'ניר עם':[31.59,34.59,15],
-  'ברור חיל':[31.59,34.54,15],'בארי':[31.53,34.50,15],
-  'רעים':[31.52,34.52,15],'נחל עוז':[31.56,34.53,15],
-  'נירים':[31.45,34.47,15],'כפר עזה':[31.48,34.53,15],
+  // אילת ודרום
+  'אילת':[29.56,34.95,30],'מצפה רמון':[30.61,34.80,30],'מצפה רמון - א':[30.61,34.80,30],
+  'ירוחם':[30.99,34.93,45],'דימונה':[31.07,35.03,45],'ערד':[31.26,35.21,45],
+  'תל שבע':[31.25,34.83,45],'רהט':[31.39,34.75,45],'לקייה':[31.34,34.78,45],
+  'ביר הדאג'':[ 30.80,34.87,45],'שגב שלום':[31.26,34.96,45],
+  // עוטף עזה
+  'כפר עזה':[31.48,34.53,15],'בארי':[31.53,34.50,15],'רעים':[31.52,34.52,15],
+  'נחל עוז':[31.56,34.53,15],'נירים':[31.45,34.47,15],'ניר עם':[31.59,34.59,15],
+  'ברור חיל':[31.59,34.54,15],'כרמיה':[31.60,34.56,15],'נתיב העשרה':[31.60,34.54,15],
+  'כיסופים':[31.39,34.47,15],'אלומים':[31.45,34.53,15],'דקל':[31.37,34.47,15],
+  'סופה':[31.34,34.48,15],'כפר מימון':[31.41,34.55,15],'בית הגדי':[31.46,34.63,15],
+  'תלמי אליהו':[31.37,34.50,15],'חולית':[31.33,34.50,15],'נען':[31.87,34.84,45],
+  'עין השלושה':[31.41,34.49,15],'רוחמה':[31.49,34.62,15],'גבים':[31.56,34.66,15],
+  // דרום
+  'אשקלון':[31.67,34.57,30],'אשקלון - צפון':[31.69,34.56,30],'אשקלון - דרום':[31.65,34.57,30],
+  'אשקלון - ניר עם':[31.68,34.57,30],'אשקלון - ברנע':[31.67,34.54,30],
+  'שדרות':[31.52,34.60,30],'נתיבות':[31.42,34.59,30],'אופקים':[31.31,34.62,30],
+  'אשדוד':[31.80,34.65,45],'אשדוד - א-ב':[31.81,34.65,45],'אשדוד - ג-ד':[31.80,34.64,45],
+  'אשדוד - ה-ו':[31.79,34.66,45],'אשדוד - ז-ח':[31.78,34.67,45],
   'קריית גת':[31.61,34.77,45],'קריית מלאכי':[31.73,34.74,45],
-  'אשקלון':[31.67,34.57,30],'אשדוד':[31.80,34.65,45],
-  'יבנה':[31.88,34.74,45],'רחובות':[31.90,34.81,60],
-  'ראשון לציון':[31.97,34.80,60],'בת ים':[32.02,34.75,60],
-  'חולון':[32.01,34.77,60],'לוד':[31.95,34.89,60],'רמלה':[31.93,34.87,60],
-  'תל אביב':[32.07,34.78,90],'רמת גן':[32.08,34.82,90],
-  'בני ברק':[32.08,34.83,90],'גבעתיים':[32.07,34.81,90],
-  'הרצליה':[32.16,34.84,90],'פתח תקווה':[32.09,34.89,90],
-  'ראש העין':[32.10,34.96,90],'כפר סבא':[32.18,34.91,90],
-  'רעננה':[32.18,34.87,90],'נתניה':[32.33,34.86,90],
-  'ירושלים':[31.77,35.22,90],'בית שמש':[31.75,34.99,90],
-  'מודיעין':[31.90,35.01,90],'אלעד':[32.05,34.95,90],
-  'חיפה':[32.82,34.98,90],'קריית אתא':[32.80,35.10,90],
+  'יבנה':[31.88,34.74,45],'גדרה':[31.81,34.77,45],'גן יבנה':[31.79,34.70,45],
+  'באר שבע':[31.25,34.79,45],'באר שבע - צפון':[31.27,34.80,45],'באר שבע - דרום':[31.23,34.79,45],
+  'נתיב הל'ה':[31.62,34.98,45],'ח'ורה':[31.37,34.93,45],'כסיפה':[31.21,34.99,45],
+  'עומר':[31.28,34.84,45],'להבים':[31.37,34.81,45],'מיתר':[31.31,34.97,45],
+  // שפלה
+  'רחובות':[31.90,34.81,60],'נס ציונה':[31.93,34.80,60],'ראשון לציון':[31.97,34.80,60],
+  'ראשון לציון - מזרח':[31.98,34.81,60],'ראשון לציון - מערב':[31.96,34.79,60],
+  'בת ים':[32.02,34.75,60],'חולון':[32.01,34.77,60],'לוד':[31.95,34.89,60],
+  'רמלה':[31.93,34.87,60],'בן שמן':[31.96,34.95,60],'מזכרת בתיה':[31.85,34.85,60],
+  'גדרה':[31.81,34.77,60],'קריית עקרון':[31.87,34.82,60],
+  // ירושלים
+  'ירושלים':[31.77,35.22,90],'ירושלים - מרכז':[31.77,35.21,90],
+  'ירושלים - דרום':[31.74,35.19,90],'ירושלים - צפון':[31.80,35.22,90],
+  'בית שמש':[31.75,34.99,90],'אבו גוש':[31.81,35.11,90],
+  'מבשרת ציון':[31.80,35.16,90],'גבעת זאב':[31.87,35.17,90],
+  'מעלה אדומים':[31.77,35.30,90],'קרית ארבע':[31.52,35.11,90],
+  'ביתר עילית':[31.70,35.11,90],'בית לחם':[31.71,35.20,90],
+  'אפרת':[31.66,35.15,90],'גוש עציון':[31.65,35.12,90],
+  // מרכז
+  'תל אביב':[32.07,34.78,90],'תל אביב - מרכז':[32.07,34.78,90],
+  'תל אביב - צפון':[32.10,34.78,90],'תל אביב - דרום':[32.05,34.77,90],
+  'רמת גן':[32.08,34.82,90],'גבעתיים':[32.07,34.81,90],'בני ברק':[32.08,34.83,90],
+  'פתח תקווה':[32.09,34.89,90],'אור יהודה':[32.03,34.86,90],
+  'גבעת שמואל':[32.08,34.85,90],'קרית אונו':[32.06,34.86,90],
+  'אזור':[31.99,34.82,90],'בית דגן':[31.97,34.83,90],
+  // שרון
+  'הרצליה':[32.16,34.84,90],'הרצליה פיתוח':[32.17,34.83,90],
+  'כפר סבא':[32.18,34.91,90],'רעננה':[32.18,34.87,90],
+  'הוד השרון':[32.15,34.89,90],'רמת השרון':[32.14,34.84,90],
+  'ראש העין':[32.10,34.96,90],'נתניה':[32.33,34.86,90],
+  'נתניה - צפון':[32.35,34.86,90],'נתניה - דרום':[32.31,34.86,90],
+  'קלנסואה':[32.28,34.99,90],'טייבה':[32.27,35.00,90],
+  'טירה':[32.23,34.95,90],'כפר קאסם':[32.11,34.98,90],
+  'ג'לג'וליה':[32.16,34.96,90],'עמנואל':[32.16,35.11,90],
+  'אלעד':[32.05,34.95,90],'מודיעין':[31.90,35.01,90],
+  'מודיעין עילית':[31.93,35.04,90],'נס ציונה':[31.93,34.80,90],
+  // חיפה
+  'חיפה':[32.82,34.98,90],'חיפה - מרכז הכרמל':[32.82,34.99,90],
+  'חיפה - נווה שאנן':[32.80,34.99,90],'חיפה - רמות כרמל':[32.78,34.97,90],
+  'חיפה - כרמליה':[32.81,34.97,90],'חיפה - הדר':[32.82,34.98,90],
+  'קריית אתא':[32.80,35.10,90],'קריית ביאליק':[32.84,35.09,90],
+  'קריית מוצקין':[32.83,35.08,90],'קריית ים':[32.85,35.07,90],
+  'קריית חיים':[32.84,35.06,90],'טירת כרמל':[32.76,34.97,90],
+  'דאלית אל כרמל':[32.69,35.04,90],'עוספיא':[32.71,35.06,90],
+  'נשר':[32.77,35.03,90],'גבעת אליה':[32.79,35.00,90],
+  // עכו והסביבה
   'עכו':[32.92,35.08,90],'נהריה':[33.00,35.09,90],
-  'כרמיאל':[32.91,35.30,90],'עפולה':[32.61,35.29,90],
-  'נצרת':[32.70,35.30,90],'טבריה':[32.79,35.53,90],
-  'צפת':[32.96,35.50,90],'קריית שמונה':[33.21,35.57,90],
-  'מטולה':[33.27,35.56,90],'שלומי':[33.07,35.14,90],
-  'קצרין':[32.99,35.69,90],
+  'כרמיאל':[32.91,35.30,90],'מעלות תרשיחא':[33.02,35.27,90],
+  'שלומי':[33.07,35.14,90],'כפר ורדים':[32.98,35.25,90],
+  'עמקא':[32.95,35.19,90],'יגור':[32.74,35.07,90],
+  'ראמה':[32.93,35.37,90],'סח'נין':[32.86,35.30,90],
+  'עראבה':[32.85,35.33,90],'כפר מנדא':[32.82,35.25,90],
+  'ריינה':[32.72,35.35,90],'יפיע':[32.67,35.28,90],
+  'דייר אל אסד':[32.94,35.23,90],'בועיינה נוג'יידאת':[32.82,35.37,90],
+  // צפון
+  'נצרת':[32.70,35.30,90],'נצרת עילית':[32.70,35.33,90],
+  'עפולה':[32.61,35.29,90],'מגדל העמק':[32.68,35.24,90],
+  'יוקנעם עילית':[32.66,35.11,90],'בית שאן':[32.50,35.50,90],
+  'אור עקיבא':[32.51,34.92,90],'קיסריה':[32.50,34.91,90],
+  'זכרון יעקב':[32.57,34.95,90],'פרדס חנה כרכור':[32.47,34.97,90],
+  'חדרה':[32.44,34.92,90],'חדרה - מזרח':[32.45,34.93,90],
+  'טבריה':[32.79,35.53,90],'טבריה - צפון':[32.81,35.53,90],
+  'כנרת':[32.72,35.57,90],'מגדל':[32.83,35.50,90],
+  'מגדל שמס':[33.27,35.77,90],'מסעדה':[33.23,35.77,90],
+  'בקעת הירדן':[32.35,35.55,90],
+  // כינרת וגולן
+  'קצרין':[32.99,35.69,90],'קצרין - א':[32.99,35.69,90],
+  'בני יהודה':[32.88,35.69,90],'אל רום':[33.12,35.78,90],
+  'כפר חרוב':[32.79,35.68,90],'גשר בנות יעקב':[33.00,35.64,90],
+  // גליל עליון
+  'צפת':[32.96,35.50,90],'צפת - א':[32.96,35.50,90],
+  'ראש פינה':[32.96,35.55,90],'חצור הגלילית':[33.02,35.55,90],
+  'קריית שמונה':[33.21,35.57,90],'קריית שמונה - א':[33.21,35.57,90],
+  'מטולה':[33.27,35.56,90],'מיסגב עם':[33.25,35.55,90],
+  'כפר גלעדי':[33.25,35.57,90],'אביבים':[33.20,35.52,90],
+  'שתולה':[33.14,35.43,90],'ראש הנקרה':[33.09,35.10,90],
+  'חניתה':[33.07,35.15,90],'לוחמי הגטאות':[32.99,35.12,90],
+  'בית הלל':[33.20,35.59,90],'מחניים':[32.97,35.57,90],
 };
 
 function shColor(s){return s<=15?'#ff1f1f':s<=30?'#ff6600':s<=45?'#ffcc00':'#3399ff'}
@@ -323,7 +537,7 @@ function clearActive(){
 
 function showActive(al){
   document.getElementById('ap').classList.add('show');
-  document.getElementById('si').classList.add('active');
+  document.getElementById('si').classList.add('active'); document.getElementById('si').querySelector('circle:first-child') && (document.getElementById('si').querySelector('circle').style.animation='logo-ring 0.4s infinite alternate');
   document.getElementById('pill').className='pill alrt';
   document.getElementById('dot').classList.add('fast');
   const fl=document.getElementById('fl');
@@ -342,16 +556,30 @@ function renderList(data){
   if(!data||!data.length){el.innerHTML='<div class="nodata">🛡️<br>אין אזעקות בתקופה זו</div>';return;}
   el.innerHTML=data.map((item,i)=>{
     const areas=item.data||[];
+    const cat=item.category||item.cat||1;
     const sh=areas.length?Math.max(...areas.map(shelterSecs)):90;
+    const barCls=cat===2?'plane':cat===3?'green':'red';
+    const barIcon=cat===2?'✈':'((•))';
+    const title=cat===2?'חדירת כלי טיס':cat===3?'רעידת אדמה':'ירי רקטות / טילים';
+    const areaText=areas.slice(0,8).join(', ')+(areas.length>8?', …':'');
+    const d=new Date(item.alertDate||item.date);
+    const timeStr=d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    const dateStr=d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'});
     return`<div class="ai${i<2?' nw':''}" onclick="focusI(${i})">
-      <div class="ait">
-        <span class="aitm">${fmt(item.alertDate||item.date)}</span>
-        <span class="aicnt">${areas.length} אזורים</span>
+      <div class="ai-bar ${barCls}"><span style="font-size:13px;color:white;font-weight:700;font-family:monospace">${barIcon}</span></div>
+      <div class="ai-content">
+        <div class="ai-title">${title}</div>
+        <div class="ai-time">לפני ${ago2(item.alertDate||item.date)} (${timeStr})</div>
+        <div class="ai-areas">${areaText}</div>
       </div>
-      <div class="aiar">${areas.slice(0,5).join(' · ')}${areas.length>5?' · …':''}</div>
-      <div class="aish"><span class="shp ${shClass(sh)}">${sh} שנ'</span>${ago(item.alertDate||item.date)}</div>
     </div>`;
   }).join('');
+}
+
+function ago2(d){
+  const s=Math.floor((Date.now()-new Date(d))/1000);
+  if(s<60)return`${s} שנ'`;if(s<3600)return`${Math.floor(s/60)} דק'`;
+  if(s<86400)return`${Math.floor(s/3600)} שע'`;return`${Math.floor(s/86400)} ימים`;
 }
 
 function renderStats(data){
@@ -424,7 +652,12 @@ function playAlert(){
 }
 function toggleSnd(){
   sndOn=!sndOn;
-  document.getElementById('sndb').textContent=sndOn?'🔔 קול':'🔕 קול';
+  const icon = document.getElementById('snd-icon');
+  if(sndOn){
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+  } else {
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15" class="snd-x"/><line x1="17" y1="9" x2="23" y2="15" class="snd-x"/>';
+  }
   document.getElementById('sndb').classList.toggle('on',sndOn);
   if(sndOn)playAlert();
 }
@@ -453,7 +686,7 @@ async function tryAPI(){
     const res=await fetch(PROXY+encodeURIComponent(URL_HIST),{signal:ctrl.signal,headers:{'X-Requested-With':'XMLHttpRequest','Referer':'https://www.oref.org.il/'}});
     const data=await res.json();
     const f=(Array.isArray(data)?data:[]).filter(d=>(d.category||d.cat||1)===1);
-    if(f.length){histData=f;if(curTab==='h')renderList(histData);else renderStats(histData);updStats(histData);}
+    if(f.length){histData=f;if(curTab==='h'){if(watchedCities.length)applyWatchFilter();else renderList(histData);}else renderStats(histData);updStats(histData);}
   }catch(e){}
 }
 
@@ -479,7 +712,7 @@ function toggleTheme(){
   const btn = document.getElementById('themebtn');
   if(isDark){
     ts.textContent = '.leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(0.78) saturate(0.7) contrast(0.95);}';
-    btn.textContent = '☀️ בהיר';
+    btn.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
     document.documentElement.style.setProperty('--bg','#07090f');
     document.documentElement.style.setProperty('--s1','#0d1117');
     document.documentElement.style.setProperty('--s2','#141b24');
@@ -491,7 +724,7 @@ function toggleTheme(){
     document.getElementById('sb').style.background='var(--s1)';
   } else {
     ts.textContent = '.leaflet-tile{filter:none;}';
-    btn.textContent = '🌙 כהה';
+    btn.querySelector('svg').innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
     document.documentElement.style.setProperty('--bg','#f0f2f5');
     document.documentElement.style.setProperty('--s1','#ffffff');
     document.documentElement.style.setProperty('--s2','#f0f2f5');
@@ -547,14 +780,223 @@ clearActive = function(){
   if(bar) bar.classList.remove('hidden');
 };
 
-// INIT
-histData=mockData();
+// ---- SETTINGS ----
+let selectedSound = 0, selectedRegion = 'all', alertVol = 0.7;
+
+const REGIONS = {
+  all: null,
+  north: ['קריית שמונה','מטולה','שלומי','נהריה','עכו','כרמיאל','צפת','טבריה','ראש פינה','כפר גלעדי'],
+  haifa: ['חיפה','קריית אתא','קריית ביאליק','קריית מוצקין','קריית ים','עפולה','נצרת','מגדל העמק'],
+  center: ['נתניה','כפר סבא','רעננה','הרצליה','פתח תקווה','ראש העין','לוד','רמלה','מודיעין','אלעד','רחובות','ראשון לציון','נס ציונה'],
+  'tel-aviv': ['תל אביב','רמת גן','גבעתיים','בני ברק','חולון','בת ים','אור יהודה','גבעת שמואל'],
+  jerusalem: ['ירושלים','בית שמש'],
+  south: ['אשדוד','אשקלון','קריית גת','קריית מלאכי','שדרות','נתיבות','אופקים','באר שבע','דימונה','ערד'],
+  gaza: ['בארי','רעים','נחל עוז','כפר עזה','נירים','ניר עם','ברור חיל','כרמיה'],
+  eilat: ['אילת','מצפה רמון','ירוחם'],
+};
+
+function openSettings(){
+  const el = document.getElementById('settings-overlay');
+  el.style.display = 'flex';
+  renderSetWatched();
+}
+function closeSettings(){
+  document.getElementById('settings-overlay').style.display = 'none';
+}
+document.getElementById('settings-overlay').addEventListener('click', function(e){
+  if(e.target === this) closeSettings();
+});
+
+function selectSound(n){
+  selectedSound = n;
+  document.querySelectorAll('.sopt').forEach(el => el.classList.toggle('on', parseInt(el.dataset.snd)===n));
+  if(n !== 3) testAlert();
+}
+
+function selectRegion(reg){
+  selectedRegion = reg;
+  document.querySelectorAll('.ropt').forEach(el => el.classList.toggle('on', el.dataset.reg===reg));
+  filterByRegion();
+}
+
+function setVol(v){
+  alertVol = v/100;
+  document.getElementById('vol-val').textContent = v + '%';
+}
+
+function filterByRegion(){
+  const allowed = REGIONS[selectedRegion];
+  let filtered = histData;
+  if(allowed){
+    filtered = histData.filter(item =>
+      (item.data||[]).some(area => allowed.some(city => area.includes(city)))
+    );
+  }
+  if(curTab==='h') renderList(filtered);
+}
+
+function testAlert(){
+  if(selectedSound === 3) return;
+  try{
+    const ctx = new AudioContext();
+    if(selectedSound === 0){
+      [880,440,880,440].forEach((f,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);o.type='sawtooth';
+        const t=ctx.currentTime+i*0.3;
+        o.frequency.setValueAtTime(f,t);
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(alertVol*0.35,t+0.04);g.gain.linearRampToValueAtTime(0,t+0.25);
+        o.start(t);o.stop(t+0.3);
+      });
+    } else if(selectedSound === 1){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.type='sawtooth';
+      o.frequency.setValueAtTime(300,ctx.currentTime);
+      o.frequency.linearRampToValueAtTime(900,ctx.currentTime+0.8);
+      o.frequency.linearRampToValueAtTime(300,ctx.currentTime+1.6);
+      g.gain.setValueAtTime(alertVol*0.4,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+1.8);
+      o.start();o.stop(ctx.currentTime+1.8);
+    } else if(selectedSound === 2){
+      for(let i=0;i<6;i++){
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);o.type='square';
+        const t=ctx.currentTime+i*0.15;
+        o.frequency.setValueAtTime(1200,t);
+        g.gain.setValueAtTime(alertVol*0.2,t);g.gain.linearRampToValueAtTime(0,t+0.1);
+        o.start(t);o.stop(t+0.15);
+      }
+    }
+  }catch(e){}
+}
+
+// Override playAlert to use settings
+playAlert = function(){
+  if(!sndOn || selectedSound === 3) return;
+  testAlert();
+};
+
+// ---- CITY SEARCH ----
+const ALL_CITIES = Object.keys(CITIES);
+let watchedCities = JSON.parse(localStorage.getItem('watched') || '[]');
+let searchActive = false;
+
+function renderWatched(){
+  const el = document.getElementById('watched-cities');
+  if(!watchedCities.length){ el.style.display='none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = watchedCities.map(c => `
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(255,34,34,0.1);border:1px solid rgba(255,34,34,0.25);border-radius:20px;padding:4px 10px;font-size:12px;color:#ff8888">
+      <span>${c}</span>
+      <span onclick="removeCity('${c}')" style="cursor:pointer;color:#ff4444;font-size:15px;line-height:1;margin-right:2px">×</span>
+    </div>`).join('');
+}
+
+function removeCity(name){
+  watchedCities = watchedCities.filter(c=>c!==name);
+  localStorage.setItem('watched', JSON.stringify(watchedCities));
+  renderWatched();
+  applyWatchFilter();
+}
+
+function addCity(name){
+  if(!watchedCities.includes(name)){
+    watchedCities.push(name);
+    localStorage.setItem('watched', JSON.stringify(watchedCities));
+  }
+  clearSearch();
+  renderWatched();
+  applyWatchFilter();
+}
+
+function applyWatchFilter(){
+  if(!watchedCities.length){ renderList(histData); return; }
+  const filtered = histData.filter(item =>
+    (item.data||[]).some(area => watchedCities.some(c => area.includes(c)))
+  );
+  renderList(filtered);
+}
+
+function onSetSearch(val){
+  const dd = document.getElementById('set-search-dd');
+  const clr = document.getElementById('set-search-clear');
+  clr.style.display = val ? 'block' : 'none';
+  if(!val.trim()){ dd.style.display='none'; return; }
+  const matches = ALL_CITIES.filter(c => c.includes(val)).slice(0, 8);
+  if(!matches.length){ dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = matches.map(c => `
+    <div onclick="addCityFromSettings('${c}')"
+      style="padding:10px 14px;font-size:13px;color:#c0cce0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);direction:rtl"
+      onmouseover="this.style.background='#1c2535'" onmouseout="this.style.background=''"
+    >${c} <span style="font-size:10px;color:#3a4460;margin-right:6px">${CITIES[c][2]} שנ'</span></div>`).join('');
+}
+
+function addCityFromSettings(name){
+  addCity(name);
+  clearSetSearch();
+  renderSetWatched();
+}
+
+function clearSetSearch(){
+  const inp = document.getElementById('set-city-search');
+  if(inp) inp.value = '';
+  const dd = document.getElementById('set-search-dd');
+  if(dd) dd.style.display='none';
+  const clr = document.getElementById('set-search-clear');
+  if(clr) clr.style.display='none';
+}
+
+function renderSetWatched(){
+  const el = document.getElementById('set-watched');
+  if(!el) return;
+  if(!watchedCities.length){ el.innerHTML=''; return; }
+  el.innerHTML = watchedCities.map(c => `
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(255,34,34,0.1);border:1px solid rgba(255,34,34,0.25);border-radius:20px;padding:4px 10px;font-size:12px;color:#ff8888">
+      <span>${c}</span>
+      <span onclick="removeCityFromSettings('${c}')" style="cursor:pointer;color:#ff4444;font-size:15px;line-height:1;margin-right:2px">×</span>
+    </div>`).join('');
+}
+
+function removeCityFromSettings(name){
+  removeCity(name);
+  renderSetWatched();
+}
+
+function onSearch(val){
+  const dd = document.getElementById('search-dropdown');
+  const clr = document.getElementById('search-clear');
+  clr.style.display = val ? 'block' : 'none';
+  if(!val.trim()){ dd.style.display='none'; return; }
+  const matches = ALL_CITIES.filter(c => c.includes(val)).slice(0, 8);
+  if(!matches.length){ dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = matches.map(c => `
+    <div onclick="addCity('${c}')"
+      style="padding:10px 14px;font-size:13px;color:#c0cce0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.1s;direction:rtl"
+      onmouseover="this.style.background='#1c2535'" onmouseout="this.style.background=''"
+    >${c} <span style="font-size:10px;color:#3a4460;margin-right:6px">${CITIES[c][2]} שנ'</span></div>`).join('');
+}
+
+function clearSearch(){
+  document.getElementById('city-search').value = '';
+  document.getElementById('search-dropdown').style.display = 'none';
+  document.getElementById('search-clear').style.display = 'none';
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#search-bar')) clearSearch();
+});
+
+// INIT — מיידי לחלוטין
+histData = mockData();
 renderList(histData);
 updStats(histData);
+renderWatched();
 tickClk();
-setInterval(tickClk,1000);
-setInterval(checkNow,5000);
-setTimeout(tryAPI,300);
+setInterval(tickClk, 1000);
+setInterval(checkNow, 5000);
+setTimeout(tryAPI, 500);
 window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 </script>
 </body>
