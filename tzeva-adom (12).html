@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>צבע אדום</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--s1:#0d1117;--s2:#141b24;--s3:#1c2535;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);
+  --tx:#e2e8f5;--mu:#7080a0;
+  --red:#ff2222;--red2:#ff6666;--redg:rgba(255,34,34,0.10);
+  font-family:'Heebo',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);overflow:hidden}
+#app{display:grid;grid-template-rows:56px 1fr;grid-template-columns:340px 1fr;height:100vh}
+
+/* HEADER */
+header{
+  grid-column:1/-1;background:var(--s1);
+  border-bottom:1px solid var(--b2);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;gap:12px;z-index:1000;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.sicon{font-size:20px}
+.sicon.active{animation:shake 0.4s infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+.bname{font-size:16px;font-weight:900}
+.bname span{color:var(--red2)}
+.pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid}
+.pill.ok{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:#4ade80}
+.pill.alrt{background:var(--redg);border-color:rgba(255,34,34,0.3);color:var(--red2)}
+.ldot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.5s infinite}
+.ldot.fast{animation-duration:0.35s}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.stats{display:flex;gap:22px}
+.st{text-align:center}
+.stv{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;line-height:1}
+.stl{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:0.8px;margin-top:2px}
+.hbtns{display:flex;align-items:center;gap:7px}
+.clk{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mu);min-width:65px;text-align:center}
+.btn{background:var(--s2);border:1px solid var(--b2);color:var(--mu);height:32px;padding:0 11px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;transition:all 0.15s}
+.btn:hover{background:var(--s3);color:var(--tx)}
+.btn.on{background:var(--redg);border-color:rgba(255,34,34,0.3);color:var(--red2)}
+
+/* SIDEBAR */
+#sb{background:var(--s1);border-left:1px solid var(--b2);display:flex;flex-direction:column;overflow:hidden;z-index:100}
+#ap{display:none;padding:13px 15px;background:rgba(255,20,20,0.06);border-bottom:1px solid rgba(255,34,34,0.2)}
+#ap.show{display:block}
+.apt{font-size:11px;font-weight:700;color:var(--red2);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.blp{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 0.4s infinite;flex-shrink:0}
+.azones{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:9px}
+.ztag{background:rgba(255,34,34,0.12);border:1px solid rgba(255,34,34,0.22);border-radius:5px;padding:3px 7px;font-size:11px;color:#ff8888;animation:pop 0.2s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+.cdrow{display:flex;align-items:center;gap:10px}
+.cdnum{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:700;color:var(--red);line-height:1;min-width:48px}
+.cdbar{flex:1;background:var(--s3);border-radius:3px;height:4px;overflow:hidden}
+.cdfill{height:100%;background:var(--red);border-radius:3px;transition:width 1s linear}
+.cdlbl{font-size:10px;color:var(--mu);margin-top:3px}
+.tabs{display:flex;border-bottom:1px solid var(--b1)}
+.tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:500;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:0.5px;transition:all 0.15s}
+.tab.on{color:var(--tx);border-bottom-color:var(--red)}
+#lw{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--s3) transparent}
+#lw::-webkit-scrollbar{width:3px}
+#lw::-webkit-scrollbar-thumb{background:var(--s3)}
+.ai{padding:11px 15px;border-bottom:1px solid var(--b1);cursor:pointer;transition:background 0.1s;border-right:2px solid transparent}
+.ai:hover{background:var(--s2);border-right-color:var(--red)}
+.ai.nw{animation:newi 2s ease-out}
+@keyframes newi{from{background:rgba(255,34,34,0.15)}to{background:transparent}}
+.ait{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.aitm{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mu)}
+.aicnt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--red2);background:var(--redg);border:1px solid rgba(255,34,34,0.18);border-radius:4px;padding:1px 5px}
+.aiar{font-size:12px;color:var(--mu);line-height:1.5}
+.aish{margin-top:4px;font-size:10px;color:var(--mu)}
+.shp{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:0.5px;margin-left:4px}
+.s15{background:rgba(255,0,0,0.18);color:#ff7070}
+.s30{background:rgba(255,100,0,0.18);color:#ffaa55}
+.s45{background:rgba(255,180,0,0.15);color:#ffd060}
+.s90{background:rgba(60,130,255,0.15);color:#80b0ff}
+.nodata{text-align:center;padding:50px 20px;color:var(--mu);font-size:13px}
+
+/* MAP */
+#mc{position:relative}
+#map{width:100%;height:100%}
+
+/* Leaflet overrides */
+.leaflet-container{background:#0d1520}
+.leaflet-control-zoom{border:1px solid rgba(255,255,255,0.12)!important;border-radius:8px!important;overflow:hidden}
+.leaflet-control-zoom a{background:#0d1117!important;color:#7080a0!important;border-color:rgba(255,255,255,0.08)!important}
+.leaflet-control-zoom a:hover{background:#1c2535!important;color:#e2e8f5!important}
+.leaflet-popup-content-wrapper{background:#0d1117!important;border:1px solid rgba(255,255,255,0.12)!important;border-radius:10px!important;color:#e2e8f5!important;box-shadow:0 8px 32px rgba(0,0,0,0.8)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important}
+.leaflet-popup-tip{background:#0d1117!important}
+.leaflet-popup-close-button{color:#7080a0!important;font-size:18px!important;top:8px!important;right:10px!important}
+.leaflet-attribution-flag{display:none!important}
+.leaflet-control-attribution{background:rgba(0,0,0,0.5)!important;color:#444!important;font-size:9px!important}
+.leaflet-control-attribution a{color:#555!important}
+
+/* Map legend */
+.map-legend{
+  position:absolute;bottom:20px;left:20px;z-index:900;
+  background:rgba(10,14,22,0.88);border:1px solid rgba(255,255,255,0.1);
+  border-radius:9px;padding:11px 14px;backdrop-filter:blur(4px);
+}
+.ml-title{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.ml-row{display:flex;align-items:center;gap:7px;font-size:11px;color:#9ba8c0;margin-bottom:5px}
+.ml-row:last-child{margin-bottom:0}
+.ml-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* Popup */
+.pu{padding:14px 16px;direction:rtl;min-width:190px}
+.pu-zone{font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.pu-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.pu-k{color:#7080a0}
+.pu-v{font-family:'IBM Plex Mono',monospace}
+.pu-warn{margin-top:9px;padding:7px 10px;background:rgba(255,34,34,0.1);border:1px solid rgba(255,34,34,0.2);border-radius:6px;font-size:11px;color:#ff8888;text-align:center;font-weight:600}
+
+/* Flash overlay */
+#fl{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0}
+#fl.go{animation:flash 0.6s ease-out 4}
+@keyframes flash{0%,100%{opacity:0}40%{opacity:1;background:rgba(255,20,20,0.2)}}
+
+@media(max-width:720px){
+  #app{grid-template-columns:1fr;grid-template-rows:52px 1fr;height:100dvh}
+  #sb{display:none;position:fixed;bottom:0;left:0;right:0;z-index:2000;
+      border-top:1px solid var(--b2);border-left:none;
+      border-radius:18px 18px 0 0;max-height:70vh;background:var(--s1);
+      box-shadow:0 -8px 32px rgba(0,0,0,0.5)}
+  #sb.open{display:flex}
+  #mc{grid-column:1;grid-row:2}
+  .stats{display:none}
+  .hbtns .clk{display:none}
+  /* bottom bar */
+  #mob-bar{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:1500;
+    background:var(--s1);border-top:1px solid var(--b2);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    gap:10px;align-items:center;justify-content:space-between;
+  }
+  #mob-bar.hidden{display:none}
+  .mob-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:10px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--b2);
+    background:var(--s2);color:var(--mu);cursor:pointer}
+  .mob-pill.active{background:var(--redg);border-color:rgba(255,34,34,0.3);color:var(--red2)}
+  .mob-alert-strip{
+    position:fixed;top:52px;left:0;right:0;z-index:1800;
+    background:rgba(255,20,20,0.92);padding:10px 16px;
+    display:none;align-items:center;gap:10px;
+    font-size:13px;font-weight:700;color:white;
+  }
+  .mob-alert-strip.show{display:flex}
+  /* map padding for bottom bar */
+  #map{padding-bottom:60px}
+}
+@media(min-width:721px){
+  #mob-bar{display:none}
+  .mob-alert-strip{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="fl"></div>
+<div id="app">
+  <header>
+    <div class="brand">
+      <span class="sicon" id="si">🚨</span>
+      <div class="bname">צבע <span>אדום</span></div>
+      <div class="pill ok" id="pill"><span class="ldot" id="dot"></span><span id="ptxt">שקט יחסי</span></div>
+    </div>
+    <div class="stats">
+      <div class="st"><div class="stv" id="s1" style="color:var(--red2)">0</div><div class="stl">אזעקות היום</div></div>
+      <div class="st"><div class="stv" id="s2" style="color:#ff9944">0</div><div class="stl">שעה אחרונה</div></div>
+      <div class="st"><div class="stv" id="s3" style="color:#ffcc44">0</div><div class="stl">אזורים</div></div>
+    </div>
+    <div class="hbtns">
+      <div class="clk" id="clk">--:--:--</div>
+      <button class="btn" id="sndb" onclick="toggleSnd()">🔕 קול</button>
+      <button class="btn" onclick="tryAPI()">↻</button>
+      <button class="btn" id="themebtn" onclick="toggleTheme()">☀️ בהיר</button>
+    </div>
+  </header>
+
+  <div id="sb">
+    <div id="ap">
+      <div class="apt"><div class="blp"></div>אזעקה פעילה!</div>
+      <div class="azones" id="az"></div>
+      <div class="cdrow">
+        <div><div class="cdnum" id="cdn">90</div><div class="cdlbl">שנ' להסתתרות</div></div>
+        <div class="cdbar"><div class="cdfill" id="cdf" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on" id="t1" onclick="setTab('h')">היסטוריה</div>
+      <div class="tab" id="t2" onclick="setTab('s')">סטטיסטיקה</div>
+    </div>
+    <div id="lw"><div class="nodata">טוען...</div></div>
+  </div>
+
+  <div id="mc">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="ml-title">זמן הסתתרות</div>
+      <div class="ml-row"><div class="ml-dot" style="background:#ff1f1f"></div>15 שנ' — עוטף עזה</div>
+      <div class="ml-row"><div class="ml-dot" style="background:#ff6600"></div>30 שנ' — אשקלון, שדרות</div>
+      <div class="ml-row"><div class="ml-dot" style="background:#ffcc00"></div>45 שנ' — אשדוד, ק"גת</div>
+      <div class="ml-row"><div class="ml-dot" style="background:#3399ff"></div>90 שנ' — מרכז, ירושלים</div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile bottom bar -->
+<div id="mob-bar">
+  <div class="mob-pill" id="mob-hist" onclick="mobTab('hist')">📋 היסטוריה</div>
+  <div class="mob-pill" id="mob-map" onclick="mobTab('map')" style="max-width:60px">🗺</div>
+  <div class="mob-pill" id="mob-stats" onclick="mobTab('stats')">📊 סטטיסטיקה</div>
+</div>
+
+<!-- Mobile active alert strip -->
+<div class="mob-alert-strip" id="mob-strip">
+  <span style="font-size:18px">🚨</span>
+  <span id="mob-strip-txt">אזעקה פעילה!</span>
+  <span id="mob-cdn" style="font-family:'IBM Plex Mono',monospace;margin-right:auto">90</span>
+  <span style="font-size:11px;opacity:0.8">שנ'</span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const CITIES = {
+  'אילת':[29.56,34.95,30],'מצפה רמון':[30.61,34.80,30],
+  'דימונה':[31.07,35.03,30],'ערד':[31.26,35.21,30],
+  'באר שבע':[31.25,34.79,45],'רהט':[31.39,34.75,45],
+  'אופקים':[31.31,34.62,30],'נתיבות':[31.42,34.59,30],
+  'שדרות':[31.52,34.60,30],'ניר עם':[31.59,34.59,15],
+  'ברור חיל':[31.59,34.54,15],'בארי':[31.53,34.50,15],
+  'רעים':[31.52,34.52,15],'נחל עוז':[31.56,34.53,15],
+  'נירים':[31.45,34.47,15],'כפר עזה':[31.48,34.53,15],
+  'קריית גת':[31.61,34.77,45],'קריית מלאכי':[31.73,34.74,45],
+  'אשקלון':[31.67,34.57,30],'אשדוד':[31.80,34.65,45],
+  'יבנה':[31.88,34.74,45],'רחובות':[31.90,34.81,60],
+  'ראשון לציון':[31.97,34.80,60],'בת ים':[32.02,34.75,60],
+  'חולון':[32.01,34.77,60],'לוד':[31.95,34.89,60],'רמלה':[31.93,34.87,60],
+  'תל אביב':[32.07,34.78,90],'רמת גן':[32.08,34.82,90],
+  'בני ברק':[32.08,34.83,90],'גבעתיים':[32.07,34.81,90],
+  'הרצליה':[32.16,34.84,90],'פתח תקווה':[32.09,34.89,90],
+  'ראש העין':[32.10,34.96,90],'כפר סבא':[32.18,34.91,90],
+  'רעננה':[32.18,34.87,90],'נתניה':[32.33,34.86,90],
+  'ירושלים':[31.77,35.22,90],'בית שמש':[31.75,34.99,90],
+  'מודיעין':[31.90,35.01,90],'אלעד':[32.05,34.95,90],
+  'חיפה':[32.82,34.98,90],'קריית אתא':[32.80,35.10,90],
+  'עכו':[32.92,35.08,90],'נהריה':[33.00,35.09,90],
+  'כרמיאל':[32.91,35.30,90],'עפולה':[32.61,35.29,90],
+  'נצרת':[32.70,35.30,90],'טבריה':[32.79,35.53,90],
+  'צפת':[32.96,35.50,90],'קריית שמונה':[33.21,35.57,90],
+  'מטולה':[33.27,35.56,90],'שלומי':[33.07,35.14,90],
+  'קצרין':[32.99,35.69,90],
+};
+
+function shColor(s){return s<=15?'#ff1f1f':s<=30?'#ff6600':s<=45?'#ffcc00':'#3399ff'}
+function shClass(s){return s<=15?'s15':s<=30?'s30':s<=45?'s45':'s90'}
+function shelterSecs(a){
+  if(!a)return 90;
+  if(a.match(/עוטף|כפר עזה|בארי|רעים|נחל עוז|נירים|כיסופים|חולית|דקל|סופה/))return 15;
+  if(a.match(/אשקלון|שדרות|נתיבות|אופקים|ניר עם|ברור חיל|כרמיה/))return 30;
+  if(a.match(/אשדוד|קריית גת|קריית מלאכי|יבנה/))return 45;
+  return 90;
+}
+function fmt(d){return new Date(d).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
+function ago(d){
+  const s=Math.floor((Date.now()-new Date(d))/1000);
+  if(s<60)return`לפני ${s} שנ'`;if(s<3600)return`לפני ${Math.floor(s/60)} דק'`;
+  if(s<86400)return`לפני ${Math.floor(s/3600)} שע'`;return`לפני ${Math.floor(s/86400)} ימים`;
+}
+
+// Init map immediately
+const map = L.map('map',{
+  center:[31.5,35.0], zoom:8,
+  minZoom:7, maxZoom:15,
+  zoomControl:false,
+});
+
+// Dark OSM tiles via stamen toner or carto - use multiple fallbacks
+
+
+
+
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.control.attribution({position:'bottomleft',prefix:''}).addTo(map);
+
+const cityMarkers = {};
+
+// Alert markers
+let alertMarkers=[], cdI=null, cdMax=90, cdVal=90;
+let histData=[], actData=[], sndOn=false, curTab='h', lastSig='';
+
+function shColor2(s){return s<=15?'#ff1f1f':s<=30?'#ff6600':s<=45?'#ffcc00':'#3399ff'}
+
+function startCD(s){
+  clearInterval(cdI);cdMax=s;cdVal=s;updCD();
+  cdI=setInterval(()=>{cdVal=Math.max(0,cdVal-1);updCD();if(!cdVal)clearInterval(cdI);},1000);
+}
+function updCD(){
+  document.getElementById('cdn').textContent=cdVal;
+  const p=Math.round(cdVal/cdMax*100);
+  const f=document.getElementById('cdf');
+  f.style.width=p+'%';
+  f.style.background=p>60?'#ff2222':p>30?'#ff6600':'#555';
+}
+
+function clearActive(){
+  document.getElementById('ap').classList.remove('show');
+  document.getElementById('si').classList.remove('active');
+  document.getElementById('pill').className='pill ok';
+  document.getElementById('dot').classList.remove('fast');
+  document.getElementById('ptxt').textContent='שקט יחסי';
+  clearInterval(cdI);
+  alertMarkers.forEach(m=>map.removeLayer(m));
+  alertMarkers=[];actData=[];lastSig='';
+}
+
+function showActive(al){
+  document.getElementById('ap').classList.add('show');
+  document.getElementById('si').classList.add('active');
+  document.getElementById('pill').className='pill alrt';
+  document.getElementById('dot').classList.add('fast');
+  const fl=document.getElementById('fl');
+  fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+
+  const areas=al.flatMap(a=>a.data||[]);
+  document.getElementById('ptxt').textContent=`אזעקה! — ${areas.length} אזורים`;
+  document.getElementById('az').innerHTML=areas.slice(0,20).map(z=>`<div class="ztag">${z}</div>`).join('');
+  startCD(Math.max(...areas.map(shelterSecs)));
+
+  alertMarkers.forEach(m=>map.removeLayer(m));alertMarkers=[];
+}
+
+function renderList(data){
+  const el=document.getElementById('lw');
+  if(!data||!data.length){el.innerHTML='<div class="nodata">🛡️<br>אין אזעקות בתקופה זו</div>';return;}
+  el.innerHTML=data.map((item,i)=>{
+    const areas=item.data||[];
+    const sh=areas.length?Math.max(...areas.map(shelterSecs)):90;
+    return`<div class="ai${i<2?' nw':''}" onclick="focusI(${i})">
+      <div class="ait">
+        <span class="aitm">${fmt(item.alertDate||item.date)}</span>
+        <span class="aicnt">${areas.length} אזורים</span>
+      </div>
+      <div class="aiar">${areas.slice(0,5).join(' · ')}${areas.length>5?' · …':''}</div>
+      <div class="aish"><span class="shp ${shClass(sh)}">${sh} שנ'</span>${ago(item.alertDate||item.date)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(data){
+  const el=document.getElementById('lw');
+  if(!data||!data.length){el.innerHTML='<div class="nodata">אין נתונים</div>';return;}
+  const cnt={};data.forEach(d=>(d.data||[]).forEach(a=>{cnt[a]=(cnt[a]||0)+1;}));
+  const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const mx=s[0]?.[1]||1;
+  el.innerHTML='<div style="padding:14px 16px">'+s.map(([a,n],i)=>`
+    <div style="margin-bottom:9px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="color:var(--mu)">${a}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--red2)">${n}</span>
+      </div>
+      <div style="background:var(--s3);border-radius:2px;height:3px">
+        <div style="background:var(--red);height:100%;width:${Math.round(n/mx*100)}%;transition:width 0.6s ${i*0.03}s"></div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+function updStats(data){
+  const now=Date.now(),tod=new Date();tod.setHours(0,0,0,0);
+  document.getElementById('s1').textContent=data.filter(d=>new Date(d.alertDate||d.date)>=tod).length;
+  document.getElementById('s2').textContent=data.filter(d=>(now-new Date(d.alertDate||d.date))<3600000).length;
+  document.getElementById('s3').textContent=new Set(data.flatMap(d=>d.data||[])).size;
+}
+
+function focusI(i){
+  const item=histData[i];if(!item)return;
+  for(const a of(item.data||[])){
+    for(const[name,[lat,lng]]of Object.entries(CITIES)){
+      if(a.includes(name)){map.flyTo([lat,lng],11,{duration:0.8});return;}
+    }
+  }
+}
+
+function setTab(t){
+  curTab=t;
+  document.getElementById('t1').classList.toggle('on',t==='h');
+  document.getElementById('t2').classList.toggle('on',t==='s');
+  if(t==='h')renderList(histData);else renderStats(histData);
+}
+
+function mockData(){
+  return[
+    {alertDate:new Date(Date.now()-300000).toISOString(),category:1,data:['אשקלון - ניר עם','ניר עם','ברור חיל','כרמיה']},
+    {alertDate:new Date(Date.now()-1800000).toISOString(),category:1,data:['שדרות','נתיבות','אופקים']},
+    {alertDate:new Date(Date.now()-7200000).toISOString(),category:1,data:['קריית שמונה','מטולה','שלומי']},
+    {alertDate:new Date(Date.now()-10800000).toISOString(),category:1,data:['תל אביב - מרכז','רמת גן','בני ברק']},
+    {alertDate:new Date(Date.now()-18000000).toISOString(),category:1,data:['נהריה','עכו','כרמיאל']},
+    {alertDate:new Date(Date.now()-25200000).toISOString(),category:1,data:['בארי','רעים','נחל עוז','כפר עזה']},
+    {alertDate:new Date(Date.now()-36000000).toISOString(),category:1,data:['אשדוד - א-ב','אשדוד - ג-ד','יבנה']},
+  ];
+}
+
+let sndCtx=null;
+function playAlert(){
+  if(!sndOn)return;
+  try{
+    sndCtx=new AudioContext();
+    [880,440,880,440].forEach((f,i)=>{
+      const o=sndCtx.createOscillator(),g=sndCtx.createGain();
+      o.connect(g);g.connect(sndCtx.destination);o.type='sawtooth';
+      const t=sndCtx.currentTime+i*0.3;
+      o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.28,t+0.04);g.gain.linearRampToValueAtTime(0,t+0.25);
+      o.start(t);o.stop(t+0.3);
+    });
+  }catch(e){}
+}
+function toggleSnd(){
+  sndOn=!sndOn;
+  document.getElementById('sndb').textContent=sndOn?'🔔 קול':'🔕 קול';
+  document.getElementById('sndb').classList.toggle('on',sndOn);
+  if(sndOn)playAlert();
+}
+
+const PROXY='https://corsproxy.io/?url=';
+const URL_NOW='https://www.oref.org.il/WarningMessages/alert/alerts.json';
+const URL_HIST='https://www.oref.org.il/WarningMessages/History/AlertsHistory.json';
+
+async function checkNow(){
+  try{
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),3000);
+    const res=await fetch(PROXY+encodeURIComponent(URL_NOW),{signal:ctrl.signal,headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const txt=await res.text();
+    if(!txt||['','[]','{}'].includes(txt.trim())){if(actData.length)clearActive();return;}
+    const d=JSON.parse(txt);
+    if(!d||!d.data||!d.data.length){if(actData.length)clearActive();return;}
+    if(d.cat&&d.cat!==1)return;
+    const sig=JSON.stringify(d.data);
+    if(sig!==lastSig){lastSig=sig;actData=d.data;playAlert();showActive([d]);tryAPI();}
+  }catch(e){if(actData.length)clearActive();}
+}
+
+async function tryAPI(){
+  try{
+    const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),5000);
+    const res=await fetch(PROXY+encodeURIComponent(URL_HIST),{signal:ctrl.signal,headers:{'X-Requested-With':'XMLHttpRequest','Referer':'https://www.oref.org.il/'}});
+    const data=await res.json();
+    const f=(Array.isArray(data)?data:[]).filter(d=>(d.category||d.cat||1)===1);
+    if(f.length){histData=f;if(curTab==='h')renderList(histData);else renderStats(histData);updStats(histData);}
+  }catch(e){}
+}
+
+function tickClk(){
+  const n=new Date();
+  document.getElementById('clk').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>v.toString().padStart(2,'0')).join(':');
+}
+
+// Tile layers
+const darkTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{subdomains:'abc',maxZoom:19,attribution:'© OpenStreetMap'});
+const lightTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{subdomains:'abc',maxZoom:19,attribution:'© OpenStreetMap'});
+let isDark = true;
+darkTile.addTo(map);
+
+const darkStyle = document.createElement('style');
+darkStyle.id = 'tilestyle';
+darkStyle.textContent = '.leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(0.78) saturate(0.7) contrast(0.95);}';
+document.head.appendChild(darkStyle);
+
+function toggleTheme(){
+  isDark = !isDark;
+  const ts = document.getElementById('tilestyle');
+  const btn = document.getElementById('themebtn');
+  if(isDark){
+    ts.textContent = '.leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(0.78) saturate(0.7) contrast(0.95);}';
+    btn.textContent = '☀️ בהיר';
+    document.documentElement.style.setProperty('--bg','#07090f');
+    document.documentElement.style.setProperty('--s1','#0d1117');
+    document.documentElement.style.setProperty('--s2','#141b24');
+    document.documentElement.style.setProperty('--s3','#1c2535');
+    document.documentElement.style.setProperty('--b2','rgba(255,255,255,0.11)');
+    document.documentElement.style.setProperty('--tx','#e2e8f5');
+    document.documentElement.style.setProperty('--mu','#7080a0');
+    document.querySelector('header').style.background='var(--s1)';
+    document.getElementById('sb').style.background='var(--s1)';
+  } else {
+    ts.textContent = '.leaflet-tile{filter:none;}';
+    btn.textContent = '🌙 כהה';
+    document.documentElement.style.setProperty('--bg','#f0f2f5');
+    document.documentElement.style.setProperty('--s1','#ffffff');
+    document.documentElement.style.setProperty('--s2','#f0f2f5');
+    document.documentElement.style.setProperty('--s3','#e2e6ec');
+    document.documentElement.style.setProperty('--b2','rgba(0,0,0,0.12)');
+    document.documentElement.style.setProperty('--tx','#1a2030');
+    document.documentElement.style.setProperty('--mu','#5a6680');
+    document.querySelector('header').style.background='#ffffff';
+    document.getElementById('sb').style.background='#ffffff';
+  }
+}
+
+// Mobile nav
+let mobView = 'map';
+function mobTab(v){
+  mobView = v;
+  const sb = document.getElementById('sb');
+  document.getElementById('mob-hist').classList.toggle('active', v==='hist');
+  document.getElementById('mob-stats').classList.toggle('active', v==='stats');
+  document.getElementById('mob-map').classList.toggle('active', v==='map');
+  if(v==='map'){
+    sb.classList.remove('open');
+  } else {
+    sb.classList.add('open');
+    setTab(v==='hist'?'h':'s');
+  }
+  if(map) setTimeout(()=>map.invalidateSize(),50);
+}
+
+// Sync mobile alert strip with countdown
+const _origUpdCD = updCD;
+updCD = function(){
+  _origUpdCD();
+  const el = document.getElementById('mob-cdn');
+  if(el) el.textContent = cdVal;
+};
+const _origShowActive = showActive;
+showActive = function(al){
+  _origShowActive(al);
+  const strip = document.getElementById('mob-strip');
+  const areas = al.flatMap(a=>a.data||[]);
+  document.getElementById('mob-strip-txt').textContent = 'אזעקה! ' + areas.slice(0,2).join(', ');
+  if(strip) strip.classList.add('show');
+  const bar = document.getElementById('mob-bar');
+  if(bar) bar.classList.add('hidden');
+};
+const _origClearActive = clearActive;
+clearActive = function(){
+  _origClearActive();
+  const strip = document.getElementById('mob-strip');
+  if(strip) strip.classList.remove('show');
+  const bar = document.getElementById('mob-bar');
+  if(bar) bar.classList.remove('hidden');
+};
+
+// INIT
+histData=mockData();
+renderList(histData);
+updStats(histData);
+tickClk();
+setInterval(tickClk,1000);
+setInterval(checkNow,5000);
+setTimeout(tryAPI,300);
+window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
+</script>
+</body>
+</html>
